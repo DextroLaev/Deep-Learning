@@ -7,6 +7,7 @@ import sys
 from model import ResNet18
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from config import *
 
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
@@ -27,8 +28,8 @@ if __name__ == '__main__':
     x_train = x_train/255.0
     x_test = x_test/255.0
 
-    train_ds = tf.data.Dataset.from_tensor_slices((x_train,y_train)).shuffle(10000).batch(128)
-    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(128).prefetch(tf.data.AUTOTUNE)
+    train_ds = tf.data.Dataset.from_tensor_slices((x_train,y_train)).shuffle(10000).batch(BATCH_SIZE)
+    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
     train_ds = train_ds.map(
         lambda x,y: (data_augmentation(x,training=True),y),num_parallel_calls=tf.data.AUTOTUNE
     ).prefetch(tf.data.AUTOTUNE)
@@ -49,9 +50,9 @@ if __name__ == '__main__':
     )
 
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(1e-3,weight_decay=1e-4),
+        optimizer=tf.keras.optimizers.Adam(LR,weight_decay=WEIGHT_DECAY),
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy']
         )
     
-    history = model.fit(train_ds,epochs=300,validation_data=test_ds,callbacks=[model_checkpoint_callback,lr_reduce])
+    history = model.fit(train_ds,epochs=EPOCHS,validation_data=test_ds,callbacks=[model_checkpoint_callback,lr_reduce])
